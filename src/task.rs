@@ -6,30 +6,27 @@ pub struct Task {
     flow: f64,
     pub plate_count: usize,
     pub alpha: f64,
-    lim: f64,
-    f_lim: f64,
     withdrawal_count: usize,
     sum_removed_impurity: f64,
     times: Vec<f64>,
-    removed_impurities: Vec<f64>
+    factors: Vec<f64>,
+    removed_impurities: Vec<f64>,
 }
 
 impl Task {
     pub fn new(
         v_pot: f64, v_sec: f64, v_def: f64,
-        flow: f64, plate_count: usize, alpha: f64, lim: f64,
+        flow: f64, plate_count: usize, alpha: f64,
     ) -> Self {
-        let mut tmp = Self {
+        Self {
             v_pot, v_sec, v_def,
-            flow, plate_count, alpha, lim,
-            f_lim: lim*alpha.powf(plate_count as f64),
+            flow, plate_count, alpha,
             withdrawal_count: 0,
             sum_removed_impurity: 0.0,
             times: Vec::new(),
+            factors: Vec::new(),
             removed_impurities: Vec::new(),
-        };
-        tmp.times.push(tmp.get_time(tmp.f_lim));
-        tmp
+        }
     }
 
     fn r(&self, f: f64) -> f64 {
@@ -42,29 +39,41 @@ impl Task {
     }
 
     fn get_time(&self, f: f64) -> f64 {
-        let plate_count = self.plate_count as f64;
-        let f_0 = self.alpha.powf(plate_count);
+        let f_0 = self.alpha.powf(self.plate_count as f64);
         let s_0 = self.s(f_0);
         self.alpha/(self.alpha - 1.0)/self.flow
             * ((s_0 - 1.0)/(s_0 - self.s(f))).ln()
                 * (self.v_sec*((s_0 - 1.0)/s_0.ln() - 1.0) + self.v_def*(s_0 - 1.0))
     }
 
-    pub fn do_sample(&mut self, f_lim: f64) -> &mut Self {
-        let f_fall = self.f_lim.powf((self.v_sec - self.v_def)/self.v_sec);
+    pub fn do_sample_if_lim(&mut self, f_lim: f64) -> &mut Self {
+        self.factors.push(f_lim);
+        let f_fall = f_lim.powf((self.v_sec - self.v_def)/self.v_sec);
+        self.factors.push(f_fall);
+
+        if self.times.is_empty() {
+            self.times.push(self.get_time(f_lim));
+        } else {
+            self.times.push(self.get_time(f_lim) - self.get_time(f_fall) + self.times[self.withdrawal_count - 1]);
+        }
+
         self.removed_impurities.push((1.0 - self.sum_removed_impurity) * self.r(f_lim));
         self.v_pot -= self.v_def;
-        self.times.push(self.get_time(f_lim) - self.get_time(f_fall) + self.times[self.withdrawal_count]);
+        
         self.sum_removed_impurity += self.removed_impurities[self.withdrawal_count];
         self.withdrawal_count += 1;
 
         self
     }
 
+    pub fn do_sample_on_time(&mut self, time: f64) -> &mut Self {
+        todo!()
+    }
+
     pub fn solve(&self, time: f64) -> f64 {
-        let eps = 0.00001;
+        let eps = 0.0001;
         let mut left_border = 1.0 + eps;
-        let mut right_border = self.f_lim;
+        let mut right_border = self.alpha.powf(self.plate_count as f64) - eps;
         let mut left_time;
         let mut temp = 0.0;
         let mut temp_time;
