@@ -54,7 +54,9 @@ impl Task {
         if self.times.is_empty() {
             self.times.push(self.get_time(f_lim));
         } else {
-            self.times.push(self.get_time(f_lim) - self.get_time(f_fall) + self.times[self.drop_count - 1]);
+            self.times.push(self.get_time(f_lim)
+                - self.get_time(self.factors[self.factors.len() - 3])
+                    + self.times.last().unwrap());
         }
 
         self.removed_impurities.push((1.0 - self.sum_removed_impurity) * self.r(f_lim));
@@ -70,11 +72,11 @@ impl Task {
         let temp_time = if self.times.is_empty() {
             time
         } else {
-            time + self.get_time(self.factors[self.drop_count * 2 - 1])
+            time + self.get_time(self.factors.last().unwrap().clone())
         };
-        println!("{}", temp_time);
+        
         let f_lim = self.solve(temp_time);
-
+        
         self.do_drop_when_factor(f_lim);
 
         self        
