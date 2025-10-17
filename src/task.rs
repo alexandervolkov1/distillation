@@ -6,7 +6,7 @@ pub struct Task {
     flow: f64,
     pub plate_count: usize,
     pub alpha: f64,
-    withdrawal_count: usize,
+    drop_count: usize,
     sum_removed_impurity: f64,
     times: Vec<f64>,
     factors: Vec<f64>,
@@ -21,7 +21,7 @@ impl Task {
         Self {
             v_pot, v_sec, v_def,
             flow, plate_count, alpha,
-            withdrawal_count: 0,
+            drop_count: 0,
             sum_removed_impurity: 0.0,
             times: Vec::new(),
             factors: Vec::new(),
@@ -46,7 +46,7 @@ impl Task {
                 * (self.v_sec*((s_0 - 1.0)/s_0.ln() - 1.0) + self.v_def*(s_0 - 1.0))
     }
 
-    pub fn do_sample_if_lim(&mut self, f_lim: f64) -> &mut Self {
+    pub fn do_drop_when_factor(&mut self, f_lim: f64) -> &mut Self {
         self.factors.push(f_lim);
         let f_fall = f_lim.powf((self.v_sec - self.v_def)/self.v_sec);
         self.factors.push(f_fall);
@@ -54,20 +54,30 @@ impl Task {
         if self.times.is_empty() {
             self.times.push(self.get_time(f_lim));
         } else {
-            self.times.push(self.get_time(f_lim) - self.get_time(f_fall) + self.times[self.withdrawal_count - 1]);
+            self.times.push(self.get_time(f_lim) - self.get_time(f_fall) + self.times[self.drop_count - 1]);
         }
 
         self.removed_impurities.push((1.0 - self.sum_removed_impurity) * self.r(f_lim));
         self.v_pot -= self.v_def;
         
-        self.sum_removed_impurity += self.removed_impurities[self.withdrawal_count];
-        self.withdrawal_count += 1;
+        self.sum_removed_impurity += self.removed_impurities[self.drop_count];
+        self.drop_count += 1;
 
         self
     }
 
-    pub fn do_sample_on_time(&mut self, time: f64) -> &mut Self {
-        todo!()
+    pub fn do_drop_in_time(&mut self, time: f64) -> &mut Self {
+        let temp_time = if self.times.is_empty() {
+            time
+        } else {
+            time + self.get_time(self.factors[self.drop_count * 2 - 1])
+        };
+        println!("{}", temp_time);
+        let f_lim = self.solve(temp_time);
+
+        self.do_drop_when_factor(f_lim);
+
+        self        
     }
 
     pub fn solve(&self, time: f64) -> f64 {
