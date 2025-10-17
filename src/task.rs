@@ -54,9 +54,11 @@ impl Task {
         if self.times.is_empty() {
             self.times.push(self.get_time(f_lim));
         } else {
-            self.times.push(self.get_time(f_lim)
-                - self.get_time(self.factors[self.factors.len() - 3])
-                    + self.times.last().unwrap());
+            self.times.push(
+                self.get_time(f_lim)
+                    - self.get_time(self.factors[self.factors.len() - 3])
+                        + self.times.last().unwrap()
+            );
         }
 
         self.removed_impurities.push((1.0 - self.sum_removed_impurity) * self.r(f_lim));
@@ -77,20 +79,18 @@ impl Task {
         
         let f_lim = self.solve(temp_time);
         
-        self.do_drop_when_factor(f_lim);
-
-        self        
+        self.do_drop_when_factor(f_lim)       
     }
 
     pub fn solve(&self, time: f64) -> f64 {
-        let eps = 0.0001;
-        let mut left_border = 1.0 + eps;
-        let mut right_border = self.alpha.powf(self.plate_count as f64) - eps;
+        const EPS: f64 = 0.0001;
+        let mut left_border = 1.0 + EPS;
+        let mut right_border = self.alpha.powf(self.plate_count as f64) - EPS;
         let mut left_time;
         let mut temp = 0.0;
         let mut temp_time;
 
-        while right_border - left_border > eps {
+        while right_border - left_border > EPS {
             temp = left_border + (right_border - left_border)/2.0;
             temp_time = self.get_time(temp);
             left_time = self.get_time(left_border);
