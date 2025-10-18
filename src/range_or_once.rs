@@ -1,5 +1,6 @@
 use std::iter::{once, Once};
 
+#[derive(Clone)]
 pub enum RangeOrOnce {
     OneTime(Once<f64>),
     Range(RangeIter),
