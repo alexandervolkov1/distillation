@@ -1,5 +1,6 @@
 #[derive(Clone, Debug)]
 pub struct Task {
+    pub v_0: f64,
     pub v_pot: f64,
     pub v_sec: f64,
     pub v_def: f64,
@@ -15,10 +16,11 @@ pub struct Task {
 
 impl Task {
     pub fn new(
-        v_pot: f64, v_sec: f64, v_def: f64,
+        v_0: f64, v_sec: f64, v_def: f64,
         flow: f64, plate_count: usize, alpha: f64,
     ) -> Self {
-        assert!(v_pot > 0.0, "`v_pot` must be positive.");
+        assert!(v_0 > 0.0, "`v_0` must be positive.");
+        assert!(v_0 > v_sec + v_def, "`v_0` must be greater than `v_sec + v_def`.");
         assert!(v_sec > 0.0, "`v_sec` must be positive.");
         assert!(v_def > 0.0, "`v_def` must be positive.");
         assert!(flow > 0.0, "`flow` must be positive.");
@@ -26,8 +28,13 @@ impl Task {
         assert!(alpha > 1.0, "`alpha` must be greater than 1.0.");
 
         Self {
-            v_pot, v_sec, v_def,
-            flow, plate_count, alpha,
+            v_0,
+            v_pot: v_0 - v_sec - v_def,
+            v_sec,
+            v_def,
+            flow,
+            plate_count,
+            alpha,
             drop_count: 0,
             sum_removed_impurity: 0.0,
             times: Vec::new(),
@@ -121,5 +128,13 @@ impl Task {
         self.do_drop_in_time(time_between_drops);
         }
         self
+    }
+
+    pub fn get_productivity(&self) -> f64 {
+        self.v_pot / self.times.last().unwrap()
+    }
+
+    pub fn get_product_yield(&self) -> f64 {
+        self.v_pot / self.v_0 * 100.0
     }
 }
