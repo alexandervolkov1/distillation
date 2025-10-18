@@ -131,7 +131,7 @@ impl Task {
     }
 
     pub fn get_productivity(&self) -> f64 {
-        self.v_pot / self.times.last().unwrap()
+        self.v_pot / self.times.last().expect("Cannot calculate productivity - no drops performed.")
     }
 
     pub fn get_product_yield(&self) -> f64 {

@@ -20,29 +20,27 @@ fn main() {
     println!("Fraction of usefull product: {:.2} %;", task.get_product_yield());
     println!("-------------------------------------------------------------------");
 
-    let mut mesh = get_tasks_meshgrid(3.0.into(), 0.08.into(), 25.0.into(), (20.0,31.0, 1.0).into(), 1.5.into());
+    let mesh = get_meshgrid(3.0, 0.08, (20.0, 25.0, 0.5), (20.0, 31.0, 1.0), 1.5);
 
-    println!("{:#?}", mesh.next().unwrap());
-    println!("{:#?}", mesh.next().unwrap());
-    println!("{:#?}", mesh.next().unwrap());
-    println!("{:#?}", mesh.next().unwrap());
-    println!("{:#?}", mesh.next().unwrap());
-    println!("{:#?}", mesh.next().unwrap());
-    println!("{:#?}", mesh.next().unwrap());
+    for i in mesh {
+    println!("{:?}", i);
+    }
 }
 
-fn get_tasks_meshgrid(
-    v_sec: Input,
-    v_def: Input,
-    flow: Input,
-    plate_count: Input,
-    alpha: Input,
+fn get_meshgrid(
+    v_sec: impl Into<Input>,
+    v_def: impl Into<Input>,
+    flow: impl Into<Input>,
+    plate_count: impl Into<Input>,
+    alpha: impl Into<Input>,
 ) -> impl Iterator<Item = (f64, f64, f64, f64, f64)> {
-    let v_sec_iter = make_range_or_once(v_sec);
-    let v_def_iter = make_range_or_once(v_def);
-    let flow_iter = make_range_or_once(flow);
-    let plate_count_iter = make_range_or_once(plate_count);
-    let alpha_iter = make_range_or_once(alpha);
     
-    iproduct!(v_sec_iter, v_def_iter, flow_iter, plate_count_iter, alpha_iter)
+    iproduct!(
+        make_range_or_once(v_sec),
+        make_range_or_once(v_def),
+        make_range_or_once(flow),
+        make_range_or_once(plate_count),
+        make_range_or_once(alpha),
+    )
+
 }
