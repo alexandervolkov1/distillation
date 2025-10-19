@@ -18,7 +18,7 @@ fn main() {
     }).unwrap();
 
     println!("===================================================================");
-    println!("\n");
+    println!("THE BEST PARAMETERS ARE:");
     println!("-------------------------------------------------------------------");
     println!("Total drops: {:.2};", best_task.drop_count);
     println!("Start period: {:.2} hours;", best_task.times[0]);
