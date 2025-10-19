@@ -139,6 +139,6 @@ impl Task {
     }
 
     pub fn efficiency(&self) -> f64 {
-        (self.productivity() * self.product_yield()).sqrt()
+        self.productivity() * self.product_yield()
     }
 }
