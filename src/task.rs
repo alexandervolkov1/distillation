@@ -130,11 +130,15 @@ impl Task {
         self
     }
 
-    pub fn get_productivity(&self) -> f64 {
-        self.v_pot / self.times.last().expect("Cannot calculate productivity - no drops performed.")
+    pub fn productivity(&self) -> f64 {
+        self.v_pot / self.times.last().unwrap()
     }
 
-    pub fn get_product_yield(&self) -> f64 {
+    pub fn product_yield(&self) -> f64 {
         self.v_pot / self.v_0 * 100.0
+    }
+
+    pub fn efficiency(&self) -> f64 {
+        (self.productivity() * self.product_yield()).sqrt()
     }
 }

@@ -9,31 +9,30 @@ use range_or_once::{Input, make_range_or_once};
 
 fn main() {
     
-    let mut task = Task::new(60.0, 3.0, 0.08, 25.0, 27, 1.5);
+    let tasks = get_tasks(60.0, 3.0, (0.01, 0.1, 0.001), 25.0, 27.0, 1.5, (1.0, 20.0, 0.5), (0.1, 1.01, 0.05), 0.99);
 
-    task.do_drop_while(5.0, 2.0, 0.9999);
+    let best_task = tasks.max_by(|task1, task2| {
+        let eff1 = task1.efficiency();
+        let eff2 = task2.efficiency();
+        eff1.partial_cmp(&eff2).unwrap()
+    }).unwrap();
 
+    println!("===================================================================");
+    println!("\n");
     println!("-------------------------------------------------------------------");
-    println!("Total drops: {};", task.drop_count);
-    println!("Total imurity removed fraction: {:.6};", task.sum_removed_impurity);
-    println!("Total time: {:.2} days.", task.times.last().unwrap() / 24.0);
-    println!("The substance remained: {:.2} liters;", task.v_pot);
+    println!("Total drops: {:.2};", best_task.drop_count);
+    println!("Start period: {:.2} hours;", best_task.times[0]);
+    println!("Time between drops: {:.2} hours;", best_task.times[1] - best_task.times[0]);
+    println!("One drop volume: {:.2} liters;", best_task.v_def);
     println!("-------------------------------------------------------------------");
-    println!("Productivity: {:.2} liters per hour;", task.get_productivity());
-    println!("Fraction of usefull product: {:.2} %;", task.get_product_yield());
+    println!("Total imurity removed fraction: {:.6};", best_task.sum_removed_impurity);
+    println!("Total time: {:.2} hours;", best_task.times.last().unwrap());
+    println!("The substance remained: {:.2} liters;", best_task.v_pot);
     println!("-------------------------------------------------------------------");
-
-    let mesh = get_meshgrid(3.0, 0.08, (20.0, 25.0, 0.5), (20.0, 31.0, 1.0), 1.5);
-
-    for i in mesh {
-    println!("{:?}", i);
-    }
-
-    let tasks = get_tasks(60.0, 3.0, 0.08, (20.0, 25.0, 0.5), (20.0, 31.0, 1.0), 1.5);
-
-    for i in tasks {
-    println!("{:?}", i);
-    }
+    println!("Productivity: {:.2} liters per hour;", best_task.productivity());
+    println!("Fraction of usefull product: {:.2} %;", best_task.product_yield());
+    println!("Effeciency of process: {:.2};", best_task.efficiency());
+    println!("-------------------------------------------------------------------");    
 }
 
 fn get_meshgrid(
@@ -42,7 +41,9 @@ fn get_meshgrid(
     flow: impl Into<Input>,
     plate_count: impl Into<Input>,
     alpha: impl Into<Input>,
-) -> impl Iterator<Item = (f64, f64, f64, f64, f64)> {
+    start_period: impl Into<Input>,
+    time_between_drops: impl Into<Input>
+) -> impl Iterator<Item = (f64, f64, f64, f64, f64, f64, f64)> {
     
     iproduct!(
         make_range_or_once(v_sec),
@@ -50,6 +51,8 @@ fn get_meshgrid(
         make_range_or_once(flow),
         make_range_or_once(plate_count),
         make_range_or_once(alpha),
+        make_range_or_once(start_period),
+        make_range_or_once(time_between_drops)
     )
 
 }
@@ -61,9 +64,14 @@ fn get_tasks(
     flow: impl Into<Input>,
     plate_count: impl Into<Input>,
     alpha: impl Into<Input>,
+    start_period: impl Into<Input>,
+    time_between_drops: impl Into<Input>,
+    needed_fraction: f64
 ) -> impl Iterator<Item = Task> {
-    get_meshgrid(v_sec, v_def, flow, plate_count, alpha)
-        .map(move |(a, b, c, d, e)| {
-            Task::new(v_0, a, b, c, d as usize, e)
+    get_meshgrid(v_sec, v_def, flow, plate_count, alpha, start_period, time_between_drops)
+        .map(move |(a, b, c, d, e, f, g)| {
+            let mut temp_task = Task::new(v_0, a, b, c, d as usize, e);
+            temp_task.do_drop_while(f, g, needed_fraction);
+            temp_task
         })
 }
