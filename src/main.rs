@@ -9,7 +9,7 @@ use range_or_once::{Input, make_range_or_once};
 
 fn main() {
     
-    let tasks = get_tasks(60.0, 3.0, (0.01, 0.1, 0.001), 25.0, 27.0, 1.5, (1.0, 20.0, 0.5), (0.1, 1.01, 0.05), 0.99);
+    let tasks = get_tasks(60.0, 3.0, (0.005, 0.015, 0.001), 25.0, 27.0, 1.5, (5.0, 18.0, 1.0), (0.01, 0.051, 0.01), 0.9999);
 
     let best_task = tasks.max_by(|task1, task2| {
         let eff1 = task1.efficiency();
