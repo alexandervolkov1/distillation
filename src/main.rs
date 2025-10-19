@@ -3,8 +3,9 @@ mod range_or_once;
 
 use itertools::iproduct;
 
-use task::Task;
+use rayon::prelude::*;
 
+use task::Task;
 use range_or_once::{Input, make_range_or_once};
 
 fn main() {
@@ -67,8 +68,9 @@ fn get_tasks(
     start_period: impl Into<Input>,
     time_between_drops: impl Into<Input>,
     needed_fraction: f64
-) -> impl Iterator<Item = Task> {
+) -> impl ParallelIterator<Item = Task> {
     get_meshgrid(v_sec, v_def, flow, plate_count, alpha, start_period, time_between_drops)
+        .par_bridge()
         .map(move |(a, b, c, d, e, f, g)| {
             let mut temp_task = Task::new(v_0, a, b, c, d as usize, e);
             temp_task.do_drop_while(f, g, needed_fraction);
