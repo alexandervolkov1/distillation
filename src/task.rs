@@ -61,7 +61,7 @@ impl Task {
     }
 
     pub fn solve(&self, time: f64) -> f64 {
-        const EPS: f64 = 0.001;
+        const EPS: f64 = 0.00001;
         const MAX_ITER: usize = 100;
         let mut left = 1.0 + EPS;
         let mut right = self.alpha.powi(self.plate_count as i32) - EPS;
