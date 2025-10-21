@@ -53,7 +53,7 @@ impl Task {
     }
 
     fn get_time(&self, f: f64) -> f64 {
-        let f_0 = self.alpha.powf(self.plate_count as f64);
+        let f_0 = self.alpha.powi(self.plate_count as i32);
         let s_0 = self.s(f_0);
         self.alpha/(self.alpha - 1.0)/self.flow
             * ((s_0 - 1.0)/(s_0 - self.s(f))).ln()
@@ -62,25 +62,25 @@ impl Task {
 
     pub fn solve(&self, time: f64) -> f64 {
         const EPS: f64 = 0.0001;
-        let mut left_border = 1.0 + EPS;
-        let mut right_border = self.alpha.powf(self.plate_count as f64) - EPS;
-        let mut left_time;
-        let mut temp = 0.0;
-        let mut temp_time;
+        const MAX_ITER: usize = 100;
+        let mut left = 1.0 + EPS;
+        let mut right = self.alpha.powi(self.plate_count as i32) - EPS;
+        let mut middle;
 
-        while right_border - left_border > EPS {
-            temp = left_border + (right_border - left_border)/2.0;
-            temp_time = self.get_time(temp);
-            left_time = self.get_time(left_border);
+        for _ in 0..MAX_ITER {
+            middle = 0.5 * (left + right);
+            let middle_time = self.get_time(middle);
 
-            if (left_time < time && temp_time > time)
-                || (left_time > time && temp_time < time) {
-                right_border = temp;
+            if (middle_time - time).abs() < EPS {
+                return middle;
+            }
+            if middle_time > time {
+                right = middle;
             } else {
-                left_border = temp;
+                left = middle;
             }
         }
-        temp
+        0.5 * (left + right)
     }
 
     pub fn do_drop_when_factor(&mut self, target_factor: f64) -> &mut Self {
@@ -112,7 +112,7 @@ impl Task {
         let temp_time = if self.times.is_empty() {
             time
         } else {
-            time + self.get_time(self.factors.last().unwrap().clone())
+            time + self.get_time(*self.factors.last().unwrap())
         };
         
         let target_factor = self.solve(temp_time);
