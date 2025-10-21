@@ -49,7 +49,7 @@ fn main() {
     println!("-------------------------------------------------------------------");    
 
     let duration = start.elapsed();
-    println!("🕐 Total execution time: {:.2?}", duration);
+    println!("Total execution time: {:.2?}", duration);
     }
 
 fn get_meshgrid(
@@ -71,7 +71,7 @@ fn get_meshgrid(
         make_range_or_once(start_period),
         make_range_or_once(time_between_drops)
     )
-
+    
 }
 
 fn get_tasks(
