@@ -58,6 +58,6 @@ impl From<(f64, f64, f64)> for Input {
 pub fn make_range_or_once<T: Into<Input>>(input: T) -> RangeOrOnce {
     match input.into() {
         Input::Single(val) => RangeOrOnce::OneTime(once(val)),
-        Input::Tuple(start, stop, step) => RangeOrOnce::Range(RangeIter { current: start, stop, step})
+        Input::Tuple(start, stop, step) => RangeOrOnce::Range(RangeIter { current: start, stop, step })
     }
 }
