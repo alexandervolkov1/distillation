@@ -4,6 +4,7 @@ pub struct Task {
     pub v_pot: f64,
     pub v_sec: f64,
     pub v_def: f64,
+    pub v_drop: f64,
     pub flow: f64,
     pub plate_count: usize,
     pub alpha: f64,
@@ -12,26 +13,22 @@ pub struct Task {
     pub times: Vec<f64>,
     pub factors: Vec<f64>,
     pub removed_impurities: Vec<f64>,
+    f_0: f64,
+    s_0: f64,
+    ln_s_0: f64,
 }
 
 impl Task {
     pub fn new(
-        v_0: f64, v_sec: f64, v_def: f64,
+        v_0: f64, v_sec: f64, v_def: f64, v_drop: f64,
         flow: f64, plate_count: usize, alpha: f64,
     ) -> Self {
-        assert!(v_0 > 0.0, "`v_0` must be positive.");
-        assert!(v_0 > v_sec + v_def, "`v_0` must be greater than `v_sec + v_def`.");
-        assert!(v_sec > 0.0, "`v_sec` must be positive.");
-        assert!(v_def > 0.0, "`v_def` must be positive.");
-        assert!(flow > 0.0, "`flow` must be positive.");
-        assert!(plate_count > 0, "`plate_count` must be positive.");
-        assert!(alpha > 1.0, "`alpha` must be greater than 1.0.");
-
-        Self {
+        let mut temp_task = Self {
             v_0,
             v_pot: v_0 - v_sec - v_def,
             v_sec,
             v_def,
+            v_drop,
             flow,
             plate_count,
             alpha,
@@ -40,7 +37,13 @@ impl Task {
             times: Vec::new(),
             factors: Vec::new(),
             removed_impurities: Vec::new(),
-        }
+            f_0: alpha.powi(plate_count as i32),
+            s_0: 0.0,
+            ln_s_0: 0.0,
+        };
+        temp_task.s_0 = temp_task.s(temp_task.f_0);
+        temp_task.ln_s_0 = temp_task.s_0.ln();
+        temp_task
     }
 
     fn r(&self, f: f64) -> f64 {
@@ -53,11 +56,9 @@ impl Task {
     }
 
     fn get_time(&self, f: f64) -> f64 {
-        let f_0 = self.alpha.powi(self.plate_count as i32);
-        let s_0 = self.s(f_0);
         self.alpha/(self.alpha - 1.0)/self.flow
-            * ((s_0 - 1.0)/(s_0 - self.s(f))).ln()
-                * (self.v_sec*((s_0 - 1.0)/s_0.ln() - 1.0) + self.v_def*(s_0 - 1.0))
+            * ((self.s_0 - 1.0)/(self.s_0 - self.s(f))).ln()
+                * (self.v_sec*((self.s_0 - 1.0)/self.ln_s_0 - 1.0) + self.v_def*(self.s_0 - 1.0))
     }
 
     pub fn solve(&self, time: f64) -> f64 {
@@ -135,7 +136,7 @@ impl Task {
     }
 
     pub fn product_yield(&self) -> f64 {
-        self.v_pot / self.v_0 * 100.0
+        self.v_pot / self.v_0
     }
 
     pub fn efficiency(&self) -> f64 {
