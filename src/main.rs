@@ -17,7 +17,6 @@ fn main() {
         60.0,
         3.0,
         (0.005, 0.015, 0.001),
-        0.0,
         25.0,
         27.0,
         1.5, 
@@ -56,18 +55,16 @@ fn main() {
 fn get_meshgrid(
     v_sec: impl Into<Input>,
     v_def: impl Into<Input>,
-    v_drop: impl Into<Input>,
     flow: impl Into<Input>,
     plate_count: impl Into<Input>,
     alpha: impl Into<Input>,
     start_period: impl Into<Input>,
     time_between_drops: impl Into<Input>
-) -> impl Iterator<Item = (f64, f64, f64, f64, f64, f64, f64, f64)> {
+) -> impl Iterator<Item = (f64, f64, f64, f64, f64, f64, f64)> {
     
     iproduct!(
         make_range_or_once(v_sec),
         make_range_or_once(v_def),
-        make_range_or_once(v_drop),
         make_range_or_once(flow),
         make_range_or_once(plate_count),
         make_range_or_once(alpha),
@@ -81,7 +78,6 @@ fn get_tasks(
     v_0: f64,
     v_sec: impl Into<Input>,
     v_def: impl Into<Input>,
-    v_drop: impl Into<Input>,
     flow: impl Into<Input>,
     plate_count: impl Into<Input>,
     alpha: impl Into<Input>,
@@ -89,11 +85,11 @@ fn get_tasks(
     time_between_drops: impl Into<Input>,
     needed_fraction: f64
 ) -> impl ParallelIterator<Item = Task> {
-    get_meshgrid(v_sec, v_def, v_drop, flow, plate_count, alpha, start_period, time_between_drops)
+    get_meshgrid(v_sec, v_def, flow, plate_count, alpha, start_period, time_between_drops)
         .par_bridge()
-        .map(move |(a, b, c, d, e, f, g, h)| {
-            let mut temp_task = Task::new(v_0, a, b, c, d, e as usize, f);
-            temp_task.do_drop_while(g, h, needed_fraction);
+        .map(move |(a, b, c, d, e, f, g)| {
+            let mut temp_task = Task::new(v_0, a, b, c, d as usize, e);
+            temp_task.do_drop_while(f, g, needed_fraction);
             temp_task
         })
 }

@@ -4,7 +4,6 @@ pub struct Task {
     pub v_pot: f64,
     pub v_sec: f64,
     pub v_def: f64,
-    pub v_drop: f64,
     pub flow: f64,
     pub plate_count: usize,
     pub alpha: f64,
@@ -20,7 +19,7 @@ pub struct Task {
 
 impl Task {
     pub fn new(
-        v_0: f64, v_sec: f64, v_def: f64, v_drop: f64,
+        v_0: f64, v_sec: f64, v_def: f64,
         flow: f64, plate_count: usize, alpha: f64,
     ) -> Self {
         let mut temp_task = Self {
@@ -28,7 +27,6 @@ impl Task {
             v_pot: v_0 - v_sec - v_def,
             v_sec,
             v_def,
-            v_drop,
             flow,
             plate_count,
             alpha,
