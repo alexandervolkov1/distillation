@@ -16,13 +16,14 @@ fn main() {
     let tasks = get_tasks(
         60.0,
         3.0,
-        (0.005, 0.015, 0.001),
+        0.2,
         25.0,
         27.0,
         1.5, 
-        (5.0, 18.0, 1.0),
-        (0.01, 0.051, 0.01),
-        0.9999
+        (5.0, 20.0, 1.0),
+        (0.01, 0.2, 0.01),
+        0.9999,
+        (0.1, 0.51, 0.1)
     );
 
     let best_task = tasks.max_by(|task1, task2| {
@@ -37,14 +38,14 @@ fn main() {
     println!("Total drops: {:.2};", best_task.drop_count);
     println!("Start period: {:.2} hours;", best_task.times[0]);
     println!("Time between drops: {:.2} hours;", best_task.times[1] - best_task.times[0]);
-    println!("One drop volume: {:.2} liters;", best_task.v_def);
+    println!("One drop volume: {:.2} liters;", (best_task.v_0 - best_task.v_pot) / best_task.drop_count as f64);
     println!("-------------------------------------------------------------------");
     println!("Total imurity removed fraction: {:.6};", best_task.sum_removed_impurity);
     println!("Total time: {:.2} hours;", best_task.times.last().unwrap());
     println!("The substance remained: {:.2} liters;", best_task.v_pot);
     println!("-------------------------------------------------------------------");
     println!("Productivity: {:.2} liters per hour;", best_task.productivity());
-    println!("Fraction of usefull product: {:.2} %;", best_task.product_yield());
+    println!("Fraction of usefull product: {:.2};", best_task.product_yield());
     println!("Effeciency of process: {:.2};", best_task.efficiency());
     println!("-------------------------------------------------------------------");    
 
@@ -59,8 +60,9 @@ fn get_meshgrid(
     plate_count: impl Into<Input>,
     alpha: impl Into<Input>,
     start_period: impl Into<Input>,
-    time_between_drops: impl Into<Input>
-) -> impl Iterator<Item = (f64, f64, f64, f64, f64, f64, f64)> {
+    time_between_drops: impl Into<Input>,
+    drop_fraction: impl Into<Input>,
+) -> impl Iterator<Item = (f64, f64, f64, f64, f64, f64, f64, f64)> {
     
     iproduct!(
         make_range_or_once(v_sec),
@@ -69,7 +71,8 @@ fn get_meshgrid(
         make_range_or_once(plate_count),
         make_range_or_once(alpha),
         make_range_or_once(start_period),
-        make_range_or_once(time_between_drops)
+        make_range_or_once(time_between_drops),
+        make_range_or_once(drop_fraction),
     )
     
 }
@@ -83,13 +86,14 @@ fn get_tasks(
     alpha: impl Into<Input>,
     start_period: impl Into<Input>,
     time_between_drops: impl Into<Input>,
-    needed_fraction: f64
+    needed_fraction: f64,
+    drop_fraction: impl Into<Input>,
 ) -> impl ParallelIterator<Item = Task> {
-    get_meshgrid(v_sec, v_def, flow, plate_count, alpha, start_period, time_between_drops)
+    get_meshgrid(v_sec, v_def, flow, plate_count, alpha, start_period, time_between_drops, drop_fraction)
         .par_bridge()
-        .map(move |(a, b, c, d, e, f, g)| {
+        .map(move |(a, b, c, d, e, f, g, h)| {
             let mut temp_task = Task::new(v_0, a, b, c, d as usize, e);
-            temp_task.do_drop_while(f, g, needed_fraction);
+            temp_task.do_drop_while(f, g, needed_fraction, h);
             temp_task
         })
 }

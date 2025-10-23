@@ -44,8 +44,8 @@ impl Task {
         temp_task
     }
 
-    fn r(&self, f: f64) -> f64 {
-        self.v_def*f / (self.v_pot + self.v_sec*(f - 1.0)/f.ln() + self.v_def*f)
+    fn r(&self, f: f64, v_drop: f64) -> f64 {
+        v_drop*f / (self.v_pot + self.v_sec*(f - 1.0)/f.ln() + self.v_def*f)
     }
 
     fn s(&self, f: f64) -> f64 {
@@ -82,10 +82,12 @@ impl Task {
         0.5 * (left + right)
     }
 
-    pub fn do_drop_when_factor(&mut self, target_factor: f64) -> &mut Self {
-        assert!(self.v_pot > self.v_def, "The substance in the pot ran out!");
+    pub fn do_drop_when_factor(&mut self, target_factor: f64, drop_fraction: f64) -> &mut Self {
+        assert!(self.v_pot > self.v_def * drop_fraction, "The substance in the pot ran out!");
+
+        let v_drop = self.v_def * drop_fraction;        
         self.factors.push(target_factor);
-        let f_fall = target_factor.powf((self.v_sec - self.v_def)/self.v_sec);
+        let f_fall = target_factor.powf((self.v_sec - v_drop)/self.v_sec);
         self.factors.push(f_fall);
 
         if self.times.is_empty() {
@@ -98,8 +100,8 @@ impl Task {
             );
         }
 
-        self.removed_impurities.push((1.0 - self.sum_removed_impurity) * self.r(target_factor));
-        self.v_pot -= self.v_def;
+        self.removed_impurities.push((1.0 - self.sum_removed_impurity) * self.r(target_factor, v_drop));
+        self.v_pot -= v_drop;
         
         self.sum_removed_impurity += self.removed_impurities[self.drop_count];
         self.drop_count += 1;
@@ -107,7 +109,7 @@ impl Task {
         self
     }
 
-    pub fn do_drop_in_time(&mut self, time: f64) -> &mut Self {
+    pub fn do_drop_in_time(&mut self, time: f64, drop_fraction: f64) -> &mut Self {
         let temp_time = if self.times.is_empty() {
             time
         } else {
@@ -116,15 +118,15 @@ impl Task {
         
         let target_factor = self.solve(temp_time);
         
-        self.do_drop_when_factor(target_factor)       
+        self.do_drop_when_factor(target_factor, drop_fraction)       
     }
 
-    pub fn do_drop_while(&mut self, start_period: f64, time_between_drops: f64, needed_fraction: f64) -> &mut Self {
+    pub fn do_drop_while(&mut self, start_period: f64, time_between_drops: f64, needed_fraction: f64, drop_fraction: f64) -> &mut Self {
 
-        self.do_drop_in_time(start_period);
+        self.do_drop_in_time(start_period, drop_fraction);
 
         while self.sum_removed_impurity < needed_fraction {
-        self.do_drop_in_time(time_between_drops);
+        self.do_drop_in_time(time_between_drops, drop_fraction);
         }
         self
     }
